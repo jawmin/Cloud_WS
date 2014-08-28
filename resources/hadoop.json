@@ -1,0 +1,65 @@
+{
+  "cluster": {
+    "relations": [
+      [
+        "hive:jobtracker", 
+        "hadoop-master:jobtracker"
+      ], 
+      [
+        "hive:namenode", 
+        "hadoop-master:namenode"
+      ], 
+      [
+        "hive:db", 
+        "mysql:db"
+      ], 
+      [
+        "hadoop-slavecluster:tasktracker", 
+        "hadoop-master:jobtracker"
+      ], 
+      [
+        "hadoop-slavecluster:datanode", 
+        "hadoop-master:namenode"
+      ]
+    ], 
+    "series": "precise", 
+    "services": {
+      "hadoop-master": {
+        "annotations": {
+          "gui-x": "670.9191466830049", 
+          "gui-y": "392.8400343585607"
+        }, 
+        "charm": "cs:precise/hadoop-10", 
+        "expose": true, 
+        "num_units": 1
+      }, 
+      "hadoop-slavecluster": {
+        "annotations": {
+          "gui-x": "628.3332046960281", 
+          "gui-y": "106.61878278661516"
+        }, 
+        "charm": "cs:precise/hadoop-10", 
+        "num_units": 2
+      }, 
+      "hive": {
+        "annotations": {
+          "gui-x": "1052.5858336947235", 
+          "gui-y": "686.3796452663048"
+        }, 
+        "charm": "cs:precise/hive-4", 
+        "num_units": 3
+      }, 
+      "mysql": {
+        "annotations": {
+          "gui-x": "1476.919207718161", 
+          "gui-y": "683.5067213702795"
+        }, 
+        "charm": "cs:precise/mysql-35", 
+        "num_units": 1, 
+        "options": {
+          "binlog-format": "ROW"
+        }
+      }
+    }
+  }
+}

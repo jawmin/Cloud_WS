@@ -1,0 +1,20 @@
+{
+    "PBSCluster": {
+        "services": {
+            "headnode": {
+                "charm": "cs:precise/mysql-27",
+                "num_units": 1
+            },
+            "computenode": {
+                "charm": "cs:precise/wordpress-20",
+                "num_units": 2
+            }
+        },
+        "relations": [
+            [
+            "headnode:node",
+            "computenode:node"
+            ]
+        ]
+    }
+}

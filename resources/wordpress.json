@@ -1,0 +1,28 @@
+{
+    "envExport": {
+        "services": {
+            "mysql": {
+                "charm": "cs:precise/mysql-27",
+                "num_units": 1,
+                "annotations": {
+                    "gui-x": "139",
+                    "gui-y": "168"
+                }
+            },
+            "wordpress": {
+                "charm": "cs:precise/wordpress-20",
+                "num_units": 1,
+                "annotations": {
+                    "gui-x": "481",
+                    "gui-y": "178"
+                }
+            }
+        },
+        "relations": [
+            [
+            "wordpress:db",
+        "mysql:db"
+            ]
+            ]
+    }
+}
