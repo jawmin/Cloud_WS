@@ -1,10 +1,8 @@
 from jujuclient import Environment, EnvError
 from errors.custom_exceptions import JujuError
+import socket
+import errno
 import logging
-
-#env.deploy("test-blog", "cs:precise/wordpress-24")
-#env.deploy("test-db", "cs:precise/mysql-46")
-#env.add_relation("test-db", "test-blog")
 
 
 class JujuCommunication:
@@ -12,27 +10,42 @@ class JujuCommunication:
     Manage the communication with the Juju controller
     """
 
-    def __init__(self, address, admin_token, port=17070):
+    def __init__(self, creds):
         """
         Constructor, initializes the connection to the Juju Controller
-        :param address: address of the juju controller
-        :param admin_token: token to access the Juju controller
-        :param port: port to reach the Juju API, default 17070
+        :param creds: information to get a connection to the Juju Controller
         :exception JujuError: raised if connection to Juju can't be done
         """
 
         self.logger = logging.getLogger(__name__)
+        self._creds = creds
+        self.client = None
+
+    def connect(self):
         self.logger.info("Connection with the JUJU Controller")
-        self.logger.debug("Server (" + address + ":" + str(port) + ")")
-        self.logger.debug("Token (" + admin_token + ")")
+        self.logger.debug("Server (%s:%s)", self._creds['address'], self._creds['port'])
+        self.logger.debug("Token (%s)", self._creds['address'])
 
-        try:
-            self._environment = Environment("wss://" + address + ":" + str(port))
-            self._environment.login(admin_token)
-        except EnvError, e:
-            raise JujuError("Communication with Juju can't be performed", e.message)
+        if not self.client:
+            try:
+                try:
+                    self.client = Environment("wss://{}:{}".format(self._creds['address'], self._creds['port']))
+                except socket.error as err:
+                        if not err.errno in (errno.ETIMEDOUT, errno.ECONNREFUSED, errno.ECONNRESET):
+                            raise JujuError("Cannot reach endpoint provided (%s:%s)"
+                                            % (self._creds['address'], self._creds['port']), err.message)
 
-        self.logger.info("Connection successfully established")
+                self.client.login(self._creds['token'])
+            except EnvError, e:
+                raise JujuError("Communication with Juju can't be performed", e.message)
+
+            self.logger.info("Connection successfully established")
+
+    def close(self):
+        if self.client:
+            self.logger.debug("Closing the communication with Juju")
+            self.client.close()
+            self.client = None
 
     def deployservice(self, service_name, charm_name, num_units=1):
         """
@@ -44,7 +57,7 @@ class JujuCommunication:
         """
         self.logger.info("Deploying the service (%s) from the charm (%s) with (%s) unit(s)",
                          service_name, charm_name, num_units)
-        return self._environment.deploy(service_name, charm_name, num_units=num_units)
+        return self.client.deploy(service_name, charm_name, num_units=num_units)
 
     def addrelation(self, service_1, service_2):
         """
@@ -54,7 +67,7 @@ class JujuCommunication:
         :return:
         """
         self.logger.info("Adding relation between (%s) and (%s)", service_1, service_2)
-        return self._environment.add_relation(service_1, service_2)
+        return self.client.add_relation(service_1, service_2)
 
     def expose(self, service_name):
         """
@@ -63,7 +76,7 @@ class JujuCommunication:
         :return:
         """
         self.logger.info("Service (%s) is being exposed", service_name)
-        return self._environment.expose(service_name)
+        return self.client.expose(service_name)
 
     def destroyservice(self, service_name):
         """
@@ -72,7 +85,7 @@ class JujuCommunication:
         :return:
         """
         self.logger.info("Destroying the service (%s)", service_name)
-        return self._environment.destroy_service(service_name)
+        return self.client.destroy_service(service_name)
 
     def getmachinesforservice(self, service_name):
         """
@@ -94,7 +107,7 @@ class JujuCommunication:
         :return:
         """
         self.logger.info("Destroying the machine (%s)", machine_numbers)
-        return self._environment.destroy_machines(machine_numbers, force=True)
+        return self.client.destroy_machines(machine_numbers, force=True)
 
     def status(self):
         """
@@ -102,10 +115,24 @@ class JujuCommunication:
         :return: status of Juju as a JSON file
         """
         self.logger.info("Get the status of the system")
-        return self._environment.status()
+        return self.client.status()
 
     def getserviceconfiguration(self, service_name):
-        return self._environment.get_service(service_name)
+        return self.client.get_service(service_name)
 
     def info(self):
-        return self._environment.info()
+        return self.client.info()
+
+
+if __name__ == '__main__':
+    address = "10.0.3.1"
+    port = 17070
+    token = "d36784462a74d471e34176613652cb15"
+
+    print "env login"
+    environment = Environment("wss://" + address + ":" + str(port))
+    environment.login(token)
+    print "env logged"
+
+    # print environment.add_local_charm("/home/ubuntu/charms/trusty/torquepbs2.zip", "trusty")
+    print environment.deploy("apache2", "local:trusty/torquepbs-1")

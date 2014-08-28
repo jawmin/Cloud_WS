@@ -1,5 +1,4 @@
 from tools.bundle_parser import BundleParser
-from tools.juju_communication import JujuCommunication
 from errors.custom_exceptions import DatabaseError
 from api.models import Bundle, Service
 import logging
@@ -10,24 +9,24 @@ class Core:
     Core of the service, manages the communication with Juju and all operations to do
     """
 
-    def __init__(self, user_id, juju_configuration, dbsession):
+    def __init__(self, user_id, juju_communication, dbsession):
         """
         Constructor, initializes the connection with the Juju Controller
         :param user_id: user performing the action
-        :param juju_configuration: configuration to access the Juju Controller
-        :exception JujuError: raised if the communication can't be done
+        :param juju_communication: configuration to access the Juju Controller
         """
         self.logger = logging.getLogger(__name__)
         self.logger.debug("Initialization of the Core for user (%s)", user_id)
+
         self.user_id = str(user_id)
-        self.juju_communication = JujuCommunication(juju_configuration['address'],
-                                                    juju_configuration['token'],
-                                                    juju_configuration['port'])
+        self.juju_communication = juju_communication
         self.dbsession = dbsession
+
         self.logger.debug("Core initialized for user (%s)", user_id)
 
     def deploybundle(self, bundle_data):
         self.logger.debug("Start the bundle deployment")
+
         bundle_parser = BundleParser(bundle_data)
 
         # generate a new bundle ID
