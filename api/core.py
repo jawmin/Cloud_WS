@@ -129,10 +129,9 @@ class Core:
 
         # get and treat the status
         status = self.juju_communication.status()
-        print status
         information = []
         started = 'started'
-        # print status
+
         for service in bundle.services.all():
             # pop all services that are not concerned
             # {bundle_name: {service_name: {[unit_name: status],...}, generalStatus: started, pending, error?]},
@@ -147,7 +146,7 @@ class Core:
                            'Details': '{}'.format(unit_data['AgentStateInfo'])}
                 if started != 'error' and state == 'error':
                     started = 'error'
-                elif started != 'error':
+                elif started != 'error' and started != "started":
                     started = 'pending'
                 information.append(service)
 
