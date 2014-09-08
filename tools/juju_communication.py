@@ -24,26 +24,25 @@ class JujuCommunication:
     def connect(self):
         self.logger.info("Connection with the JUJU Controller")
         self.logger.debug("Server (%s:%s)", self._creds['address'], self._creds['port'])
-        self.logger.debug("Token (%s)", self._creds['address'])
+        self.logger.debug("Token (%s)", self._creds['token'])
 
         if not self.client:
             try:
                 try:
                     self.client = Environment("wss://{}:{}".format(self._creds['address'], self._creds['port']))
+                    self.client.login(self._creds['token'])
                 except socket.error as err:
                         if not err.errno in (errno.ETIMEDOUT, errno.ECONNREFUSED, errno.ECONNRESET):
                             raise JujuError("Cannot reach endpoint provided (%s:%s)"
                                             % (self._creds['address'], self._creds['port']), err.message)
-
-                self.client.login(self._creds['token'])
             except EnvError, e:
                 raise JujuError("Communication with Juju can't be performed", e.message)
 
             self.logger.info("Connection successfully established")
 
     def close(self):
+        self.logger.debug("Closing the communication with Juju")
         if self.client:
-            self.logger.debug("Closing the communication with Juju")
             self.client.close()
             self.client = None
 

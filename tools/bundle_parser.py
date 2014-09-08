@@ -15,7 +15,7 @@ class BundleParser:
         :exception BundleError: raised if the bundle is incorrect
         """
 
-        if bundle is None:
+        if bundle is None or type(bundle) is str:
             raise BundleError("The bundle provided is empty")
 
         if bundle.values() is None or bundle.values()[0] is None:

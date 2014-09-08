@@ -129,8 +129,9 @@ class Core:
 
         # get and treat the status
         status = self.juju_communication.status()
+        print status
         information = []
-        started = True
+        started = 'started'
         # print status
         for service in bundle.services.all():
             # pop all services that are not concerned
@@ -140,16 +141,20 @@ class Core:
             for unit_name, unit_data in units_list.items():
                 state = unit_data['AgentState']
                 self.logger.debug('State of (%s) is (%s)', unit_name, state)
-                if state != 'started':
-                    information.append('{}: {}'.format(unit_name, state))
-                    started = False
+
+                # if state != 'started':
+                service = {'Service': unit_name, 'State': state,
+                           'Details': '{}'.format(unit_data['AgentStateInfo'])}
+                if started != 'error' and state == 'error':
+                    started = 'error'
+                elif started != 'error':
+                    started = 'pending'
+                information.append(service)
 
         result = dict()
         result['Bundle'] = bundle_id
-        if started:
-            result['Status'] = 'Started'
-        else:
-            result['Status'] = 'Pending'
+        result['Status'] = started
+        if started != 'Started':
             result['Information'] = information
 
         return result
